@@ -147,7 +147,7 @@ export default function Home() {
 
   // Memoized search function
   const handleSearch = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value.toLowerCase();
+    const searchTerm = e.target.value;
     setInputValue(searchTerm);
   },[]);
 

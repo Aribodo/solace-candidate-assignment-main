@@ -22,15 +22,13 @@ export async function GET(request: NextRequest) {
   if (searchTerm == null || searchTerm == "") return Response.json({ data:tableData });
   const data = tableData.filter((advocate) => {
     const searchableFields = [
-      advocate.firstName.toLowerCase(),
-      advocate.lastName.toLowerCase(),
+      `${advocate.firstName.toLowerCase()} ${advocate.lastName.toLowerCase()}`,
       advocate.city.toLowerCase(),
       advocate.degree.toLowerCase(),
       advocate.yearsOfExperience.toString(),
       ...advocate.specialties.map(s => s.toLowerCase())
     ];
-
-    return searchableFields.some(field => field.includes(searchTerm));
+    return searchableFields.some(field => field.includes(searchTerm.toLowerCase()));
   });
 
   return Response.json({ data });
