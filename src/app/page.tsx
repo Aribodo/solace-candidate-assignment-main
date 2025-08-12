@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import spinner from "../../public/loading.png"
+import spinnerWhite from "../../public/loading-white.png"
 
 // Types
 interface Advocate {
@@ -58,11 +59,12 @@ const AdvocateCard: React.FC<{ advocate: Advocate; index: number }> = ({ advocat
 );
 
 const SearchBar: React.FC<{
+  isDesktop: boolean;
   isLoading: boolean;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
-}> = ({ isLoading, value, onChange, onClear }) => (
+}> = ({ isDesktop, isLoading, value, onChange, onClear }) => (
   <div className="flex flex-col">
     <input
       value={value}
@@ -79,7 +81,7 @@ const SearchBar: React.FC<{
       </button>
       <Image
         className={`${isLoading ? "block":"hidden"} animate-spin`}
-        src={spinner}
+        src={isDesktop ? spinner:spinnerWhite}
         width={24}
         height={24}
         alt="Loading spinner"
@@ -174,6 +176,7 @@ export default function Home() {
         <div className="block md:absolute flex-col md:right-4 w-full md:w-52">
           <Logo fill={isDesktop ? "#347866" : "white"} />
           <SearchBar 
+            isDesktop={isDesktop}
             isLoading={isLoading}
             value={inputValue}
             onChange={handleSearch}
