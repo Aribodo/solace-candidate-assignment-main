@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import spinner from "../../public/loading.png"
 
 // Types
 interface Advocate {
@@ -56,10 +58,11 @@ const AdvocateCard: React.FC<{ advocate: Advocate; index: number }> = ({ advocat
 );
 
 const SearchBar: React.FC<{
+  isLoading: boolean;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
-}> = ({ value, onChange, onClear }) => (
+}> = ({ isLoading, value, onChange, onClear }) => (
   <div className="flex flex-col">
     <input
       value={value}
@@ -74,6 +77,13 @@ const SearchBar: React.FC<{
       >
         Clear
       </button>
+      <Image
+        className={`${isLoading ? "block":"hidden"} animate-spin`}
+        src={spinner}
+        width={24}
+        height={24}
+        alt="Loading spinner"
+      />
     </div>
   </div>
 );
@@ -83,25 +93,13 @@ export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [isDesktop, setIsDesktop] = useState(false);
   const [inputValue, setInputValue] = useState("");
-
-  const filtered = advocates.filter((advocate) => {
-    const searchableFields = [
-      advocate.firstName.toLowerCase(),
-      advocate.lastName.toLowerCase(),
-      advocate.city.toLowerCase(),
-      advocate.degree.toLowerCase(),
-      advocate.yearsOfExperience.toString(),
-      ...advocate.specialties.map(s => s.toLowerCase())
-    ];
-    
-    return searchableFields.some(field => field.includes(inputValue));
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch advocates on mount
   useEffect(() => {
     const fetchAdvocates = async () => {
       try {
-        const response = await fetch("/api/advocates");
+        const response = await fetch("/api/advocates?search=");
         const jsonResponse = await response.json();
         setAdvocates(jsonResponse.data);
       } catch (error) {
@@ -133,23 +131,37 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    setIsLoading(true);
+    const getData = setTimeout(async () => {
+    const response = await fetch(`/api/advocates?search=${inputValue}`);
+    const jsonResponse = await response.json();
+    setAdvocates(jsonResponse.data);
+    setIsLoading(false);
+    }, 1000)
+
+    return () => clearTimeout(getData)
+  }, [inputValue]);
+
+  
+
   // Memoized search function
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value.toLowerCase();
     setInputValue(searchTerm);
-  };
+  },[]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setInputValue("");
-  };
+  },[]);
 
   // Feed height calculation
-  const handleFeedHeight = () => {
+  const handleFeedHeight = useCallback(() => {
     const feed = document.getElementById("feed");
     if (feed && isDesktop) {
       feed.style.height = `${window.innerHeight - 60}px`;
     }
-  };
+  },[isDesktop]);
 
   // Update feed height when advocates change
   useEffect(() => {
@@ -162,6 +174,7 @@ export default function Home() {
         <div className="block md:absolute flex-col md:right-4 w-full md:w-52">
           <Logo fill={isDesktop ? "#347866" : "white"} />
           <SearchBar 
+            isLoading={isLoading}
             value={inputValue}
             onChange={handleSearch}
             onClear={handleClear}
@@ -179,7 +192,7 @@ export default function Home() {
             id="feed" 
             className="w-full text-sm overflow-y-scroll px-2 md:px-0"
           >
-            {filtered.map((advocate, index) => (
+            {advocates.map((advocate, index) => (
               <AdvocateCard 
                 key={`${advocate.firstName}-${advocate.lastName}-${index}`}
                 advocate={advocate} 
